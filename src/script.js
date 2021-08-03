@@ -12,12 +12,26 @@ const gui = new dat.GUI()
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
-
+// const canvas1 = document.querySelector('canvas.webgl2')
 // Scene
 const scene = new THREE.Scene()
+const scene1 = new THREE.Scene()
 
 // Objects
 const geometry = new THREE.SphereBufferGeometry(.5, 64, 64)
+const geometry1 = new THREE.TorusGeometry(.7, .2, 16, 100);
+
+const particlesGeometry = new THREE.BufferGeometry;
+const particlescnt = 5000;
+
+
+const posArray = new Float32Array(particlescnt * 3);
+
+for (let i = 0; i < particlescnt * 3; i++) {
+    // posArray[i] = Math.random() - 0.5
+    posArray[i] = (Math.random() - 0.5) * (Math.random() * 10)
+}
+particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3))
 
 // Materials
 
@@ -27,9 +41,22 @@ material.roughness = 0.2
 material.normalMap = normalTexture
 material.color = new THREE.Color(0xffffff)
 
+
+const material1 = new THREE.PointsMaterial({
+    size: 0.005,
+    color: 'white'
+})
+const particlesMaterial = new THREE.PointsMaterial({
+    size: 0.005,
+    transparent: true,
+    color: 'white'
+})
+
 // Mesh
 const sphere = new THREE.Mesh(geometry, material)
-scene.add(sphere)
+const sphere1 = new THREE.Points(geometry1, material1)
+const particlesMash = new THREE.Points(particlesGeometry, particlesMaterial)
+scene.add(sphere, sphere1, particlesMash)
 
 // Lights
 
@@ -79,6 +106,9 @@ light2.addColor(lightcolor, 'color')
     .onChange(() => {
         pointLight2.color.set(lightcolor.color)
     })
+
+
+
 /**
  * Sizes
  */
@@ -120,6 +150,8 @@ scene.add(camera)
  */
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas,
+    // canvas: canvas1,
+
     // alpha: true
 })
 renderer.setSize(sizes.width, sizes.height)
@@ -130,6 +162,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
  */
 
 document.addEventListener('mousemove', onDocumentMouseMove)
+document.addEventListener('mousemove', animateParticle)
+
 let mouseX = 0
 let mouseY = 0
 
@@ -144,8 +178,15 @@ function onDocumentMouseMove(e) {
     mouseY = (e.clientY - windowY)
 }
 
+function animateParticle(e) {
+    mouseY = e.clientY
+    mouseX = e.clientX
+}
+
 const updateSphere = (e) => {
     sphere.position.y = window.scrollY * .001
+    if (window.scrollY > 100)
+        particlesMash.position.y = (window.scrollY - 800) * 0.001
 }
 window.addEventListener('scroll', updateSphere)
 
@@ -161,18 +202,35 @@ const tick = () => {
 
     // Update objects
     sphere.rotation.y = .5 * elapsedTime
+    sphere1.rotation.y = .5 * elapsedTime
+    pointLight3.rotation.y = .5 * elapsedTime
+    // if (pointLight2.position.x < 10) {
+    //     pointLight2.position.x = .5 * elapsedTime
+    //     // pointLight2.position.z = .5 * elapsedTime
+    // }
+    // if ((pointLight2.position.x = 10)  (pointLight2.position.z < 0.1)) {
+    //     pointLight2.position.z = .5 * elapsedTime
+    //     pointLight2.position.x = -.5 * elapsedTime
+
+    // }
+    pointLight.rotation.x = .5 * elapsedTime
 
 
     sphere.rotation.y += .5 * (targetX - sphere.rotation.y)
     sphere.rotation.x += .05 * (targetY - sphere.rotation.x)
-    sphere.position.z += -.05 * (targetY - sphere.rotation.x)
+    // sphere.position.z += -.05 * (targetY - sphere.rotation.x)
+    particlesMash.rotation.y = 0.1 * (elapsedTime)
 
+    if (mouseY > 0) {
+        particlesMash.rotation.x = -mouseY * (10) * 0.00001
+        // particlesMash.rotation.y = -mouseX * (10) * 0.00008
+    }
 
     // Update Orbital Controls
     // controls.update()
 
     // Render
-    renderer.render(scene, camera)
+    renderer.render(scene, camera,)
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
